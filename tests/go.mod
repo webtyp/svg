@@ -6,7 +6,7 @@ require (
 	webtyp.com/dom v0.13.12
 	webtyp.com/fmt v1.0.0
 	webtyp.com/html v0.0.22
-	webtyp.com/svg v0.3.7
+	webtyp.com/svg v0.3.9
 )
 
 replace webtyp.com/svg => ../
