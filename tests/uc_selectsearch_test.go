@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"webtyp.com/dom"
+	"webtyp.com/dom/domtest"
 	"webtyp.com/fmt"
 	. "webtyp.com/html"
 	"webtyp.com/svg"
@@ -132,7 +133,7 @@ func (c *SelectSearch) filteredOptions() []SearchOption {
 }
 
 func TestSelectSearch(t *testing.T) {
-	SetupDOM(t)
+	domtest.Mount(t, "root")
 
 	selectedID := ""
 	c := &SelectSearch{
@@ -150,22 +151,22 @@ func TestSelectSearch(t *testing.T) {
 		t.Fatalf("Render failed: %v", err)
 	}
 
-	_, ok := GetRef("ss-toggle-id")
+	_, ok := domtest.Query("#ss-toggle-id")
 	if !ok {
 		t.Fatal("toggle not found")
 	}
 
-	TriggerEvent("ss-search-id", "input", "Option 2")
+	domtest.Fill("#ss-search-id", "Option 2")
 	if c.filterTerm.Get() != "Option 2" {
 		t.Errorf("expected filterTerm='Option 2', got %q", c.filterTerm.Get())
 	}
 
-	_, ok = GetRef("ss-opt-opt1")
+	_, ok = domtest.Query("#ss-opt-opt1")
 	if ok {
 		t.Error("opt1 should be filtered out")
 	}
 
-	TriggerEvent("ss-opt-opt2", "click", "")
+	domtest.Fire("#ss-opt-opt2", "click")
 	if selectedID != "opt2" {
 		t.Errorf("expected selectedID='opt2', got %q", selectedID)
 	}

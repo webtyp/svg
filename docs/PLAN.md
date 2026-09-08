@@ -3,8 +3,9 @@ PLAN: "fix(svg/tests): restore the WASM suite on dom/domtest"
 TAG: v0.3.9
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 826954424214104375
+PR: https://github.com/webtyp/svg/pull/8
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
