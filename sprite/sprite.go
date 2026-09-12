@@ -145,12 +145,6 @@ func (s *Sprite) Append() model.Fielder {
 	return &iconFielder{icon: &s.icons[len(s.icons)-1]}
 }
 
-// Schema returns the model schema.
-func (s *Sprite) Schema() []model.Field { return nil }
-
-// Pointers returns pointers to fields.
-func (s *Sprite) Pointers() []any { return nil }
-
 type iconFielder struct {
 	icon *Definition
 }
