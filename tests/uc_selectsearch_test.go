@@ -52,7 +52,7 @@ func (c *SelectSearch) buildOptionNodes() []*dom.Element {
 		item := Div().Class("ss-option").
 			ID("ss-opt-"+opt.ID).
 			Attr("data-id", opt.ID).
-			On("click", func(e dom.Event) { c.selectOption(opt) }).
+			OnClick(func(e dom.Event) { c.selectOption(opt) }).
 			Child(Span().Class("ss-label").Text(opt.Label))
 		if opt.Description != "" {
 			item.Child(Span().Class("ss-desc").Text(opt.Description))
@@ -86,7 +86,7 @@ func (c *SelectSearch) Render() *dom.Element {
 		Class("ss-search").
 		Attr("placeholder", "Search...").
 		BindAttr("value", c.filterTerm).
-		On("input", c.onSearchInput)
+		OnInput(c.onSearchInput)
 
 	list := Div().Class("ss-options").ID("ss-options").BindChildren(c.optionNodes)
 
