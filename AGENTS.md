@@ -8,8 +8,7 @@ Constraints for agents modifying this library. Read before any change.
 
 This library is part of WebTyp's **construction harness**: the typed,
 explicit API is what keeps an agent that doesn't know the library from building
-wrong code. (Ecosystem rationale: `webtyp/app/docs/CONSTRUCTION_HARNESS.md` and
-`app/docs/CONSTRUCTION_HARNESS.md`.)
+wrong code. (Ecosystem rationale: the [`api-design` skill](https://github.com/webtyp/devskills/blob/main/skills/api-design/SKILL.md).)
 
 **This library never uses `//go:build`.** It has two unconditional consumer
 classes — the WASM browser client, and backend-only programs (`webtyp/ssr`'s
