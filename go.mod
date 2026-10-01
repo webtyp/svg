@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	webtyp.com/dom v0.13.17
-	webtyp.com/json v0.5.25
+	webtyp.com/json v0.5.27
 	webtyp.com/model v0.1.9
 )
 
