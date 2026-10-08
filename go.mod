@@ -3,7 +3,7 @@ module webtyp.com/svg
 go 1.26.8
 
 require (
-	webtyp.com/dom v0.13.21
+	webtyp.com/dom v0.13.22
 	webtyp.com/json v0.5.29
 	webtyp.com/model v0.2.2
 )
