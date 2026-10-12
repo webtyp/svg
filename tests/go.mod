@@ -3,7 +3,7 @@ module webtyp.com/svg/tests
 go 1.26.8
 
 require (
-	webtyp.com/dom v0.13.24
+	webtyp.com/dom v0.13.25
 	webtyp.com/fmt v1.0.0
 	webtyp.com/html v0.0.27
 	webtyp.com/svg v0.3.24
