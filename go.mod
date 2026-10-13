@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/dom v0.13.25
 	webtyp.com/json v0.5.29
-	webtyp.com/model v0.2.2
+	webtyp.com/model v0.2.3
 )
 
 require webtyp.com/fmt v1.0.0
