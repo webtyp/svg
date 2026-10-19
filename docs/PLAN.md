@@ -3,6 +3,8 @@ PLAN: "feat(sprite): AddLayers extracts Inkscape layers and variants into indivi
 TAG: v0.0.12
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 145096485109354402
 ---
 
 > Read AGENTS.md at the repo root before any change.
