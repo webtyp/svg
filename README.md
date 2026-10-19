@@ -158,6 +158,14 @@ func NewSprite(symbols ...Symbol) *Sprite
 
 Constructs a `*Sprite` from typed definitions. The only way to build a sprite.
 
+#### `AddLayers`
+
+```go
+func (s *Sprite) AddLayers(prefix, svgFile string) error
+```
+
+Parses an SVG document and adds each top-level layer or variant element with an "id" attribute as an individual `<symbol>` prefixed by `prefix + "-" + id`.
+
 ### `svg/sanitize` package — `//go:build !wasm`
 
 Sólo para SVG de terceros. No reutilices `sprite` (búsqueda de strings para
