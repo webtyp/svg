@@ -3,8 +3,10 @@ PLAN: "feat(sprite): AddLayers extracts Inkscape layers and variants into indivi
 TAG: v0.0.12
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 145096485109354402
+PR: https://github.com/webtyp/svg/pull/9
+REVIEWED_COMMIT: 31969bccd02034a20983723f2bb58201e3d9292f
 ---
 
 > Read AGENTS.md at the repo root before any change.
