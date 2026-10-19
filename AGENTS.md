@@ -81,11 +81,11 @@ library's, but it is the number one mistake this design is vulnerable to.
 - No `map`, no generics, no `any`. Value semantics; unexported struct fields.
 - `Path(d)` hardcodes `fill="currentColor"` — icons are color-agnostic; theming
   happens in CSS at the use-site. Never emit fixed colors.
-- `viewBox` is mandatory everywhere (`Define`, `AddRaw`, `AddFile`) — no implicit
+- `viewBox` is mandatory everywhere (`Define`, `AddRaw`, `AddFile`, `AddLayers`) — no implicit
   default. A symbol rendered in a box it was not drawn for is clipped or
   misaligned, and no default can recover the source coordinate system.
-- `AddRaw` (body + explicit viewBox) and `AddFile` (a whole `.svg` file, viewBox
-  parsed from its root element) exist for assetmin's raw file/favicon path only;
+- `AddRaw` (body + explicit viewBox), `AddFile` (a whole `.svg` file, viewBox
+  parsed from its root element) and `AddLayers` (extract modular SVGs) exist for assetmin's raw file/favicon path only;
   they are not the consumer API. Parsing SVG markup belongs HERE, never in
   assetmin — assetmin bundles assets, it does not know the SVG format.
 - No `regexp` and no stdlib in the file parser (`file.go`): plain byte scanning.
