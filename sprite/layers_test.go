@@ -38,6 +38,22 @@ func TestAddLayers_Inkscape(t *testing.T) {
 	if !strings.Contains(got, `<g transform="translate(1,1)"><path id="eyes-normal" d="M3 4" /></g>`) {
 		t.Errorf("Expected transform to be applied to child, got %s", got)
 	}
+
+	// Inkscape writes every attribute on its own line: the tag name is followed by a newline.
+	inkscape := NewSprite()
+	file := "<svg viewBox=\"0 0 24 24\"><g\n   id=\"poses\"\n   style=\"display:inline\"><g\n   id=\"pose-think\"\n   style=\"display:none\"><path\n   id=\"pose-think-ink\"\n   style=\"display:none\"\n   d=\"M5 6\" /></g></g></svg>"
+	if err := inkscape.AddLayers("cote", file); err != nil {
+		t.Fatalf("AddLayers failed: %v", err)
+	}
+	gotInk := inkscape.String()
+	start := strings.Index(gotInk, `<symbol id="cote-pose-think"`)
+	if start < 0 {
+		t.Fatalf("missing symbol cote-pose-think in %q", gotInk)
+	}
+	symbol := gotInk[start : start+strings.Index(gotInk[start:], "</symbol>")]
+	if !strings.Contains(symbol, "d=\"M5 6\" /></g>") || strings.Contains(symbol, "display:none") {
+		t.Errorf("group symbol lost its children or kept display:none: %q", symbol)
+	}
 }
 
 func TestAddLayers_HandBgFill(t *testing.T) {

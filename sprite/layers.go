@@ -60,17 +60,18 @@ func (s *Sprite) AddLayers(prefix, svgFile string) error {
 
 			tagContent := content[openTag:closeBracket+1]
 
-			// Extract tag name
-			spaceIdx := index(tagContent, 0, " ")
-			if spaceIdx < 0 {
-				spaceIdx = index(tagContent, 0, ">")
-			}
-			if spaceIdx < 0 {
-				spaceIdx = index(tagContent, 0, "/>")
+			// Inkscape puts a newline, not a space, after the tag name.
+			nameEnd := 1
+			for nameEnd < len(tagContent) {
+				c := tagContent[nameEnd]
+				if c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '>' || c == '/' {
+					break
+				}
+				nameEnd++
 			}
 
-			if spaceIdx > 1 {
-				tagName := tagContent[1:spaceIdx]
+			if nameEnd > 1 {
+				tagName := tagContent[1:nameEnd]
 
 				// check for ID
 				idVal := getAttr(tagContent, "id")
@@ -96,7 +97,7 @@ func (s *Sprite) AddLayers(prefix, svgFile string) error {
 							// verify it's really an open tag (space or > or /> after)
 							if nextOpen+len(tagName)+1 < len(content) {
 								nextChar := content[nextOpen+len(tagName)+1]
-								if nextChar == ' ' || nextChar == '>' || nextChar == '/' {
+								if nextChar == ' ' || nextChar == '\n' || nextChar == '\t' || nextChar == '\r' || nextChar == '>' || nextChar == '/' {
 									depth++
 									searchIdx = nextOpen + 1
 									continue
@@ -148,7 +149,7 @@ func (s *Sprite) AddLayers(prefix, svgFile string) error {
 
 					symbolBody += cleanContent
 					if !isSelfClosing {
-						symbolBody += innerContent + "</" + tagName + ">"
+						symbolBody += showAll(innerContent) + "</" + tagName + ">"
 					}
 
 					if parentTransform != "" {
@@ -182,6 +183,22 @@ func (s *Sprite) AddLayers(prefix, svgFile string) error {
 	}
 
 	return nil
+}
+
+// showAll removes every Inkscape editing-time "display:none" inside a variant: once the
+// variant is its own symbol, a hidden descendant would never be drawn.
+func showAll(content string) string {
+	out := content
+	for _, hidden := range [...]string{"display:none;", "display: none;", "display:none", "display: none"} {
+		for {
+			idx := index(out, 0, hidden)
+			if idx < 0 {
+				break
+			}
+			out = out[:idx] + out[idx+len(hidden):]
+		}
+	}
+	return out
 }
 
 // helper functions for byte scanning attributes
