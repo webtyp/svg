@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/dom v0.13.26
 	webtyp.com/fmt v1.0.0
-	webtyp.com/html v0.0.28
+	webtyp.com/html v0.0.29
 	webtyp.com/svg v0.3.30
 )
 
