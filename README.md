@@ -79,10 +79,10 @@ identifier shared by definition and reference. A typo or rename breaks the
 build in both places at once.
 
 You never call `IconSvg()` yourself. The `webtyp` framework does it
-automatically as part of its build pipeline: `webtyp/ssr` extracts it during
-SSR and `assetmin` merges every component's sprite into one block and injects
-it inline at the top of `<body>`. There is no `/assets/icons.svg` URL —
-`href="#id"` always resolves without a network request.
+automatically as part of its build pipeline: `webtyp/sitec` extracts it during
+SSR, merges every component's sprite into one external hashed file
+(`sprite.<hash>.svg`), and emits `<meta name="webtyp-sprite" content="...">` so
+`Icon.Render` resolves `<use href="/sprite.<hash>.svg#id"/>` under strict CSP.
 
 For how that pipeline runs (dev server, hot-reload, installation), see
 [`webtyp/app`](https://github.com/webtyp/app) — that's the framework

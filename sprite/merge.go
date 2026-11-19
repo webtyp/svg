@@ -4,7 +4,7 @@ package sprite
 // that injects a sprite needs a stable insertion point, so an empty sprite must
 // still emit its wrapper. Composing this outside forces every consumer to
 // duplicate the markup — which is exactly what assetmin used to do.
-const EmptyWrapper = `<svg aria-hidden="true" style="display:none"></svg>`
+const EmptyWrapper = `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
 
 // MergeAll merges sprites in order, keeping the first occurrence of each icon
 // ID. This is the single home of the ecosystem's deduplication policy:

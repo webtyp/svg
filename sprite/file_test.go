@@ -11,7 +11,7 @@ func TestAddFile(t *testing.T) {
 	}
 
 	got := s.String()
-	want := `<svg aria-hidden="true" style="display:none"><symbol id="home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol></svg>`
+	want := `<svg xmlns="http://www.w3.org/2000/svg"><symbol id="home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol></svg>`
 	if got != want {
 		t.Errorf("String()\ngot:  %s\nwant: %s", got, want)
 	}

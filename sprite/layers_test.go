@@ -27,14 +27,6 @@ func TestAddLayers_Inkscape(t *testing.T) {
 		}
 	}
 
-	// We strip display:none from the element itself, but when we output the whole <g id="eyes">
-	// with its inner contents, it might still contain `display:none` since the byte scanner only removes
-	// it from the tag of the current matched ID.
-	// We want to ensure that `id="prefix-eyes-normal"` does not have `display:none`.
-	if strings.Contains(got, `<path id="eyes-normal" style="display:none" d="M3 4" />`) {
-		// If we extract `eyes-normal` it shouldn't have `display:none`. Wait, if we are checking the generated `prefix-eyes` symbol, its inner content will have the unstripped version because our scanner reconstructs the inner content exactly as-is!
-	}
-
 	if !strings.Contains(got, `<g transform="translate(1,1)"><path id="eyes-normal" d="M3 4" /></g>`) {
 		t.Errorf("Expected transform to be applied to child, got %s", got)
 	}

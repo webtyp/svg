@@ -1,97 +1,139 @@
 ---
-PLAN: "chore: drop the Schema()/Pointers() stubs from list types"
+PLAN: "feat: support external sprite URL via SetSpriteURL and webtyp-sprite meta tag"
 EXECUTOR: jules
 REVIEWER: none
 ---
 
-> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
->
-> **Phase C** of
-> [`LIST_CONTRACT_MASTER_PLAN.md`](https://github.com/webtyp/docs/blob/main/LIST_CONTRACT_MASTER_PLAN.md).
-> Runs in parallel with the other phase-C repos.
->
-> **Depends on phase A** (`webtyp.com/model`) and **phase B** (`webtyp.com/ormc`).
-> As the first line of work: `go get webtyp.com/model@latest`. Never add a
-> `replace`, never invent a version.
+> Read AGENTS.md at the repo root before any change.
+> **Finish by yourself:** when the delivery check passes, commit, push and open the pull request. Never ask whether to proceed or finalize — nobody answers, and a session that waits ends without your work.
 
-# Plan — `webtyp.com/svg`: a list stops claiming it has columns
+# Plan: `svg` con sprite externo (`sprite.<hash>.svg`)
 
-## 0. Context (verified against the repo — do not re-diagnose)
+Master: `SECURITY_OBSERVABILITY_MASTER_PLAN.md` (D3, O3b-2).
 
-`model.FielderSlice` used to embed `model.Fielder`, so every list type had to
-answer "what are your columns?" — a question a sequence of rows cannot have.
-`ormc` therefore emitted, on every generated list:
+## Tools
 
+```bash
+export GOPRIVATE=webtyp.com/*,github.com/veltylabs/*
+export GOFLAGS=-mod=mod
+go install webtyp.com/devflow/cmd/gotest@latest
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+## Ecosystem search
+
+- Buscado en `~/Dev/Project/webtyp` (`svg`, `icons`, `sitec`, `components`, `layout`).
+- Todos los íconos del ecosistema pasan por `svg.Icon.Render` (`svg/icon.go:18`), que hoy emite `<use href="#id"/>`.
+- **Decisión:** extender `webtyp.com/svg` para resolver la URL del sprite externo en una sola pieza, manteniendo intactos todos los call sites en `icons`, `components` y `layout`.
+
+## Design gate
+
+1. **Prior art:**
+   - [MDN — SVG `<use>`](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use): `<use href="/sprite.<hash>.svg#id"/>` referencia símbolos de un archivo SVG externo del mismo origen sin incrustar `<svg>` en el HTML.
+   - [web.dev — Strict CSP](https://web.dev/articles/strict-csp): sacar el SVG del HTML evita estilos en línea y permite cachear el sprite de forma inmutable por hash.
+   - [Vite / webpack SVG sprite plugins](https://vitejs.dev/guide/assets.html): emiten un archivo con hash en el nombre y prefijan `href` con su ruta.
+2. **Novice-name test:** `svg.SetSpriteURL(url string)` y `svg.SpriteMetaName = "webtyp-sprite"` — nombres literales que dicen exactamente qué configuran y qué `<meta>` lee el navegador.
+3. **Complexity ledger:**
+   - Conceptos a aprender: `+1` (`SetSpriteURL`, solo lo llama `sitec` en SSR) / `-0`
+   - Archivos a tocar en módulos/componentes: `0`
+   - Líneas en el call site (`icons`, `components`, `layout`): `0`
+   - Formas de hacer lo mismo: `0` (`Icon.Render` sigue siendo el único camino).
+4. **Where it belongs:** `webtyp.com/svg` posee `Icon.Render`. Poner la resolución en `svg` evita acoplar `components`, `layout` e `icons` a `sitec` o al DOM del `<head>`.
+5. **What does this change delete?** Nada nuevo se duplica; reemplaza el prefijo fijo `"#"` por `spriteURL() + "#"` cuando hay sprite externo.
+
+## APIs used
+
+| Symbol | Exact signature | Tag | File |
+|---|---|---|---|
+| `dom.NewElement` | `func NewElement(tag string) *Element` | `v0.13.29` | `webtyp.com/dom` |
+
+If a signature in the published tag differs from this table, stop and name the symbol in the PR; never adapt it by guessing.
+
+## Reglas de entrega y anti-footguns
+
+- `svg` compila a WASM con TinyGo: **no usar `map` ni stdlib `strings`/`fmt`** en archivos compartidos o `wasm`.
+- Hacer commit después de cada etapa. No usar `git reset`, `git restore`, `git checkout -- <file>` ni `git stash`.
+
+---
+
+## Etapa 1: Diagrama y pruebas (TDD)
+
+1. Crear `docs/diagrams/SPRITE_URL.md` (contexto, `flowchart TD`, walkthrough numerado):
+   - SSR (`!wasm`): `sitec` llama `svg.SetSpriteURL("/sprite.<hash>.svg")` → `Icon.Render` emite `<use href="/sprite.<hash>.svg#id"/>`.
+   - Navegador (`wasm`): primera llamada a `Icon.Render` lee `<meta name="webtyp-sprite" content="/sprite.<hash>.svg">` → cachea URL → emite `<use href="/sprite.<hash>.svg#id"/>`.
+   - Sin URL (tests unitarios aislados): emite `<use href="#id"/>`.
+2. Crear `tests/sprite_url_test.go` y registrar en `docs/TESTS.md` (`| [TestName](../tests/sprite_url_test.go) | regla |`):
+   - `TestIconRender_DefaultHashOnly`: con `SetSpriteURL("")`, `Icon("check").Render().String()` contiene `href="#check"`.
+   - `TestIconRender_ExternalSpriteURL`: con `SetSpriteURL("/sprite.abc123.svg")`, `Icon("check").Render().String()` contiene `href="/sprite.abc123.svg#check"`.
+   - `TestSprite_ExternalXMLNSAndNoInlineStyle`: `sprite.NewSprite(def).String()` y `sprite.EmptyWrapper` empiezan con `<svg xmlns="http://www.w3.org/2000/svg">` y NO contienen `style=`.
+   - Actualizar `sprite/file_test.go:14` al nuevo wrapper `<svg xmlns="http://www.w3.org/2000/svg">`.
+
+## Etapa 2: Implementar `SetSpriteURL`, `<meta>` en WASM y wrapper SVG externo sin `style=""`
+
+1. En `sprite/sprite.go:78` y `sprite/merge.go:7`:
+   - Cambiar `<svg aria-hidden="true" style="display:none">` por `<svg xmlns="http://www.w3.org/2000/svg">` (obligatorio para que el navegador parsee un archivo `.svg` externo en `<use href="/sprite.<hash>.svg#id"/>` y sin `style=""` en línea bajo CSP `style-src 'self'`).
+2. Crear `sprite_url.go`:
 ```go
-func (s *XList) Schema() []model.Field { return nil }
-func (s *XList) Pointers() []any       { return nil }
+package svg
+
+// SpriteMetaName is the <meta name="..."> emitted by sitec with the external sprite URL.
+const SpriteMetaName = "webtyp-sprite"
+
+var configuredSpriteURL string
+
+// SetSpriteURL sets the external sprite file URL (for example "/sprite.a1b2c3d4.svg")
+// prefixed before "#<id>" by Icon.Render. Pass "" to emit bare "#<id>" references.
+func SetSpriteURL(url string) {
+	configuredSpriteURL = url
+}
 ```
-
-Nothing ever called them: the json codec reaches rows through
-`Len()`/`At()`/`Append()` and type-asserts the **element**, never the list.
-
-The harm is that having them made the lie true for the compiler. A list
-satisfies `model.Fielder`, so `Accepts(&XList{})` compiles and
-`mcp/tool_schema.go` believes it, publishing the tool **advertising that it
-takes no arguments** — no error, no log.
-
-Phase A narrowed `FielderSlice` to `Len`/`At`/`Append`; phase B stopped `ormc`
-emitting the two stubs. This repo now carries them as dead weight. Removing them
-is what closes the hole **here**: until it regenerates, its list types still
-satisfy `model.Fielder`.
-
-**This is not a size optimization.** Measured: ~27 bytes per list type, 0,02 %
-of a real WASM client. Do not justify or scope this change by binary size.
-
-**Anti-footgun.** Do NOT remove the `EncodeFields`/`DecodeFields` no-ops from
-list types. `json.Encode` takes a `model.Encodable`, so deleting those breaks
-every call that serializes a list. That alternative was measured and rejected.
-`Len`, `At` and `Append` are the whole slice contract now and must survive
-untouched.
-
-## Quality rules
-
-```
-RULE: never hand-edit a generated *_orm.go — run the generator.
-RULE: every repeated string is a named constant; string literals forbidden in logic.
-RULE: this repo's behaviour must not change; only dead methods disappear.
-```
-
-## Stage 1 — the hand-written list
-
-**File:** `sprite/sprite.go` — `Sprite` is written by hand, so `ormc` never touches it.
-
-Delete its two stub methods:
-
+2. Crear `sprite_url_back.go` (`//go:build !wasm`):
 ```go
-func (s *Sprite) Schema() []model.Field { return nil }
-func (s *Sprite) Pointers() []any       { return nil }
+//go:build !wasm
+
+package svg
+
+func currentSpriteURL() string { return configuredSpriteURL }
 ```
+3. Crear `sprite_url_front.go` (`//go:build wasm`):
+```go
+//go:build wasm
 
-Keep `Len`, `At`, `Append`, `IsNil`, `EncodeFields` and `DecodeFields` exactly
-as they are. If the type is declared to satisfy an interface via a
-`var _ model.X = (*Sprite)(nil)` line, leave that line alone — it must still
-compile, and that is the check.
+package svg
 
-## Acceptance criteria
+import "syscall/js"
 
-1. `go build ./...`, `go vet ./...`, `go test ./...` green.
-2. `grep -rn "List) Schema() \[\]model.Field" --include='*.go' .` → empty.
-3. `grep -rn "List) Pointers()" --include='*.go' .` → empty.
-4. `grep -rnc "Append() model.Fielder" --include='*.go' .` → unchanged from
-   before the change: the traversal contract survived.
-5. `go.mod` requires the phase A tag of `webtyp.com/model`; no `replace`.
-6. `grep -rn "TODO\|FIXME\|Deprecated" --include='*.go' .` → only hits that
-   predate this change.
+var spriteMetaLoaded bool
 
-## Out of scope
+func currentSpriteURL() string {
+	if configuredSpriteURL != "" || spriteMetaLoaded {
+		return configuredSpriteURL
+	}
+	doc := js.Global().Get("document")
+	if doc.IsUndefined() || doc.IsNull() {
+		return ""
+	}
+	meta := doc.Call("querySelector", `meta[name="`+SpriteMetaName+`"]`)
+	if meta.IsNull() || meta.IsUndefined() {
+		return ""
+	}
+	spriteMetaLoaded = true
+	configuredSpriteURL = meta.Get("content").String()
+	return configuredSpriteURL
+}
+```
+4. En `icon.go:22`, cambiar:
+   `Child(dom.NewElement("use").Attr("href", currentSpriteURL()+"#"+string(i)))`
 
-- Changing `model.FielderSlice` itself — phase A, already shipped.
-- Changing what `ormc` emits — phase B, already shipped.
-- Removing the `EncodeFields`/`DecodeFields` no-ops — measured and rejected.
-- Any behaviour change in this repo. If a test fails, the cause is upstream:
-  report it, do not paper over it here.
+## Etapa 3: Documentación y entrega
 
-| Stage | Files | Action |
+1. Actualizar `README.md` (≤ 150 líneas, 4 secciones obligatorias), `docs/ARCHITECTURE.md` (4 secciones) y `docs/TESTS.md`.
+2. Ejecutar `gotest`.
+
+## Tabla de etapas
+
+| Etapa | Archivos | Qué |
 |---|---|---|
-| 1 | `sprite/sprite.go` | delete `Sprite`'s two stub methods by hand |
+| 1 | `docs/diagrams/SPRITE_URL.md`, `tests/sprite_url_test.go`, `docs/TESTS.md` | Diagrama y pruebas TDD |
+| 2 | `sprite_url.go`, `sprite_url_back.go`, `sprite_url_front.go`, `icon.go` | Resolución de URL de sprite en SSR y WASM |
+| 3 | `README.md`, `docs/ARCHITECTURE.md`, `docs/TESTS.md` | Documentación y `gotest` verde |

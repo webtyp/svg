@@ -75,7 +75,7 @@ func (s *Sprite) String() string {
 		return EmptyWrapper
 	}
 	var b fmt.Builder
-	b.WriteString("<svg aria-hidden=\"true\" style=\"display:none\">")
+	b.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\">")
 	for _, e := range s.icons {
 		b.WriteString("<symbol id=\"")
 		b.WriteString(e.Icon.ID())
